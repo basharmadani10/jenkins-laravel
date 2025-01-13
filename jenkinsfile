@@ -2,12 +2,12 @@ pipeline {
     agent any
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub')
+        GITHUB_CREDENTIALS = credentials('github')
     }
     stages {
         stage('Environment Variables') {
             steps {
                 sh 'printenv'
-                sh 'ls -la'
             }
         }
         
@@ -25,26 +25,47 @@ pipeline {
         stage('Dockerize') {
             steps {
                 script {
-                    sh 'echo "docker"'
+                    try {
+                        sh "docker build -t mo1074/laravel-jenkins:${BUILD_NUMBER} ."
+                    } catch (Exception e) {
+                        error "Docker build failed: ${e.message}"
+                    }
                 }
             }
         }
 
-        stage('Login to Docker Hub') {
+        stage('Push to Docker Hub') {
             steps {
                 script {
-                    sh 'echo "Logging in to Docker Hub"'
-        
+                    try {
+                        withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                            sh '''
+                            echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+                            docker push mo1074/laravel-jenkins:${BUILD_NUMBER}
+                            '''
+                        }
+                    } catch (Exception e) {
+                        error "Docker push failed: ${e.message}"
+                    }
                 }
             }
         }
 
-        stage('Upload to Docker Hub') {
+        stage('Deployment Stage') {
             steps {
                 script {
-                    sh 'echo " end"'
+                    try {
+                        // Ensure kubectl is configured to use the correct context
+                        sh '''
+                        kubectl config use-context my-k8s-context
+                        kubectl apply -R -f /k8s  
+                        kubectl set image deployment/MYAPP MYAPP=mo1074/laravel-jenkins:${BUILD_NUMBER}
+                        '''
+                    } catch (Exception e) {
+                        error "Deployment failed: ${e.message}"
+                    }
                 }
             }
-        }    
+        }
     }
 }
