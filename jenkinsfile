@@ -57,9 +57,9 @@ pipeline {
                     try {
                         // Ensure kubectl is configured to use the correct context
                         sh '''
-                        kubectl config use-context default
-                        kubectl apply -R -f /k8s  
-                        kubectl set image deployment/MYAPP MYAPP=mo1074/laravel-jenkins:${BUILD_NUMBER}
+                  
+                         k3s kubectl apply -R -f /k8s  
+                         k3s kubectl set image deployment/MYAPP MYAPP=mo1074/laravel-jenkins:${BUILD_NUMBER}
                         '''
                     } catch (Exception e) {
                         error "Deployment failed: ${e.message}"
