@@ -1,0 +1,50 @@
+pipeline {
+    agent any
+    environment {
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub')
+    }
+    stages {
+        stage('Environment Variables') {
+            steps {
+                sh 'printenv'
+                sh 'ls -la'
+            }
+        }
+        
+        stage('Pull Request Number') {
+            when {
+                changeRequest target: 'main'
+            }
+            steps {
+                script {
+                    echo "PR: ${CHANGE_ID}"
+                }
+            }
+        }            
+        
+        stage('Dockerize') {
+            steps {
+                script {
+                    sh 'echo "docker"'
+                }
+            }
+        }
+
+        stage('Login to Docker Hub') {
+            steps {
+                script {
+                    sh 'echo "Logging in to Docker Hub"'
+        
+                }
+            }
+        }
+
+        stage('Upload to Docker Hub') {
+            steps {
+                script {
+                    sh 'echo " end"'
+                }
+            }
+        }    
+    }
+}
