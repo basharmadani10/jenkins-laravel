@@ -13,9 +13,9 @@ spec:
         app: myapp
     spec:
       initContainers:
-      - name: busybox  # Corrected the image name
+      - name: busybox  
         image: busybox
-        command: ['sh', '-c', 'cp /home/bm10/app-jenkins/jenkins-laravel/.env /var/www/html/']  # Specify the correct path to .env
+        command: ['sh', '-c', 'cp /home/bm10/app-jenkins/jenkins-laravel/.env /var/www/html/'] 
         volumeMounts:
         - mountPath: /var/www/html
           name: v1
@@ -30,5 +30,5 @@ spec:
           name: http
       volumes:
       - name: v1
-        hostPath:  # Corrected the volume definition
-          path: /home/bm/k8s # Specify the path on the host where you want to mount
+        hostPath: 
+          path: /home/bm/k8s 
