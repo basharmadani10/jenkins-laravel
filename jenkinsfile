@@ -58,7 +58,7 @@ pipeline {
                         // Ensure kubectl is configured to use the correct context
                         sh '''
                   
-                         k3s kubectl apply -R -f k8s/
+                         k3s kubectl apply -R -f /var/lib/jenkins/workspace/messu_main/k8s/
 
 
                 k3s kubectl set image deployment/myapp myapp-container=mo1074/laravel-jenkins:${BUILD_NUMBER}
