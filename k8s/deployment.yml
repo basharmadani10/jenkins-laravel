@@ -1,34 +1,47 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: myapp
+  name: myapp-deployment 
+  labels:
+    app: myapp
 spec:
-  replicas: 1
+  replicas: 1  
   selector:
     matchLabels:
-      app: myapp
+      app: myapp 
   template:
     metadata:
       labels:
         app: myapp
     spec:
       initContainers:
-      - name: busybox  
+      - name: copy-env
         image: busybox
-        command: ['sh', '-c', 'cp /home/bm10/app-jenkins/jenkins-laravel/.env /var/www/html/'] 
+        command:
+        - sh
+        - -c
+        - cp /config/.env /var/www/html/.env
         volumeMounts:
+        - mountPath: /config
+          name: config-volume
         - mountPath: /var/www/html
-          name: v1
+          name: app-volume
       containers:
       - name: myapp-container
-        image: mo1074/laravel-jenkins:${BUILD_NUMBER}
-        volumeMounts:
-        - mountPath: /var/www/html
-          name: v1
+        image: mo1074/laravel-jenkins:25
         ports:
         - containerPort: 80
           name: http
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /var/www/html
+          name: app-volume
       volumes:
-      - name: v1
-        hostPath: 
-          path: /home/bm/k8s 
+      - name: config-volume
+        configMap:
+          name: myapp-config
+      - name: app-volume
+        hostPath:
+          path: /mnt
+        
+        
