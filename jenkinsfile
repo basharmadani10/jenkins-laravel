@@ -7,17 +7,73 @@ pipeline {
     stages {
         stage('Clean Workspace') {
             steps {
-                cleanWs()  // تنظيف الدليل الحالي
+                cleanWs() 
             }
         }
         stage('Clone') {
             steps {
                 script {
-                    // Clone the repository into the default workspace
+                
                     sh 'git clone https://github.com/basharmadani10/jenkins-laravel .'
                 }
             }
         }
-        // باقي المراحل...
+        
+        stage('Pull Request Number') {
+            when {
+                changeRequest target: 'main'
+            }
+            steps {
+                script {
+                    echo "PR: ${CHANGE_ID}"
+                }
+            }
+        }            
+        
+        stage('Dockerize') {
+            steps {
+                script {
+                    try {
+                        // Build the Docker image from the default workspace
+                        sh "docker build -t mo1074/laravel-jenkins:${BUILD_NUMBER} ."
+                    } catch (Exception e) {
+                        error "Docker build failed: ${e.message}"
+                    }
+                }
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                script {
+                    try {
+                        withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                            sh '''
+                            echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+                            docker push mo1074/laravel-jenkins:${BUILD_NUMBER}
+                            '''
+                        }
+                    } catch (Exception e) {
+                        error "Docker push failed: ${e.message}"
+                    }
+                }
+            }
+        }
+
+        stage('Deployment Stage') {
+            steps {
+                script {
+                    try {
+                        // Ensure kubectl is configured to use the correct context
+                        sh '''
+                         k3s kubectl apply -R -f /var/lib/jenkins/workspace/messu_main/k8s/
+                         k3s kubectl set image deployment/myapp myapp-container=mo1074/laravel-jenkins:${BUILD_NUMBER}
+                        '''
+                    } catch (Exception e) {
+                        error "Deployment failed: ${e.message}"
+                    }
+                }
+            }
+        }
     }
 }
