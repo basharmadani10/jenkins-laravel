@@ -5,9 +5,12 @@ pipeline {
         GITHUB_CREDENTIALS = credentials('github')
     }
     stages {
-        stage('Environment Variables') {
+        stage('clone') {
             steps {
-                sh 'printenv'
+                script {
+                    // Clone the repository into the default workspace
+                    sh 'git clone https://github.com/basharmadani10/jenkins-laravel .'
+                }
             }
         }
         
@@ -26,6 +29,7 @@ pipeline {
             steps {
                 script {
                     try {
+                        // Build the Docker image from the default workspace
                         sh "docker build -t mo1074/laravel-jenkins:${BUILD_NUMBER} ."
                     } catch (Exception e) {
                         error "Docker build failed: ${e.message}"
@@ -57,11 +61,8 @@ pipeline {
                     try {
                         // Ensure kubectl is configured to use the correct context
                         sh '''
-                  
-                         k3s kubectl apply -R -f /var/lib/jenkins/workspace/messu_main/k8s/
-
-
-                k3s kubectl set image deployment/myapp myapp-container=mo1074/laravel-jenkins:${BUILD_NUMBER}
+                         k3s kubectl apply -R -f /var/lib/jenkins/workspace/jenkins-laravel/k8s/
+                         k3s kubectl set image deployment/myapp myapp-container=mo1074/laravel-jenkins:${BUILD_NUMBER}
                         '''
                     } catch (Exception e) {
                         error "Deployment failed: ${e.message}"
