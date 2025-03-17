@@ -2,4 +2,18 @@ kubectl create namespace jenkins
 kubectl create sa jenkins -n jenkins
 kubectl create token jenkins -n jenkins --duration=8760h
 kubectl create rolebinding jenkins-admin-binding --clusterrole=admin --serviceaccount=jenkins:jenkins --namespace=jenkins
+kubectl config view 
+Dashboard->Manage jenkins-> clouds -> New cloud 
+name: kubernetes
+server: https://ip:6443
+kubernetes url: "https://ip:6443"
+kubernetes ns: jenkins
+jenkins url: ip of jenkins machine:8080
+
+Disable https certifacte check
+
+
+credentials:
+choice secret text
+in secret set token of  this command  "kubectl create token jenkins -n jenkins --duration=8760h"
 
